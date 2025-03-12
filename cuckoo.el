@@ -1,4 +1,4 @@
-;;; cuckoo.el --- Content-based search hacks for elfeed -*- lexical-binding: t; -*-
+;;; cuckoo-search.el --- Content-based search hacks for elfeed -*- lexical-binding: t; -*-
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: https://github.com/rtrppl/cuckoo
@@ -33,17 +33,18 @@
 
 (require 'cl-lib)
 
-(defvar cuckoo-content-id (make-hash-table :test 'equal) "Hashtable with the key content hash and the value id.")
-(defvar cuckoo-content-title (make-hash-table :test 'equal) "Hashtable with the key content hash and the value id.")
-(defvar cuckoo-content-url (make-hash-table :test 'equal) "Hashtable with the key content hash and the value id.")
-(defvar cuckoo-content-full_filename (make-hash-table :test 'equal) "Hashtable with the key content hash and the value id.")
-(defvar cuckoo-elfeed-data-folder "~/.elfeed/data/")
-(defvar cuckoo-fd-metadata-cmd "fd -a --type file .")
+(defvar cuckoo-search-content-id (make-hash-table :test 'equal) "Hashtable with the key content hash and the value id.")
+(defvar cuckoo-search-content-title (make-hash-table :test 'equal) "Hashtable with the key content hash and the value id.")
+(defvar cuckoo-search-content-url (make-hash-table :test 'equal) "Hashtable with the key content hash and the value id.")
+(defvar cuckoo-search-content-full_filename (make-hash-table :test 'equal) "Hashtable with the key content hash and the value id.")
+(defvar cuckoo-search-elfeed-data-folder "~/.elfeed/data/")
+(defvar cuckoo-search-elfeed-index-file "~/.elfeed/index")
+(defvar cuckoo-search-fd-metadata-cmd "fd -a --type file .")
 
-(defun cuckoo-read-index-file ()
+(defun cuckoo-search-read-index-file ()
   "Reads the Elfeed index file and return only the real index (:version 4)."
   (with-temp-buffer
-    (insert-file-contents "~/.elfeed/index") 
+    (insert-file-contents cuckoo-search-elfeed-index-file) 
     (goto-char (point-min))
     (let (real-index)  
       (while (not (eobp))  
@@ -54,9 +55,9 @@
           (error nil)))  
       real-index))) 
 
-(defun cuckoo-get-index-meta ()
+(defun cuckoo-search-get-index-meta ()
   "Tests the read index function. This one works!"
-  (let ((index (cuckoo-read-index-file)) 
+  (let ((index (cuckoo-search-read-index-file)) 
         (entries nil))
     (when index 
       (setq entries (plist-get index :entries)) 
@@ -72,41 +73,40 @@
 				  (match-string 1 entry-string)
 				nil)) 
 			     (entry-tags (elfeed-entry-tags value)))
-			(puthash entry-content-hash value cuckoo-content-id)
-			(puthash entry-content-hash entry-title cuckoo-content-title)
-			(puthash entry-content-hash entry-url cuckoo-content-url))) 
+			(puthash entry-content-hash value cuckoo-search-content-id)
+			(puthash entry-content-hash entry-title cuckoo-search-content-title)
+			(puthash entry-content-hash entry-url cuckoo-search-content-url))) 
 		       entries)))))
 
-(defun cuckoo-get-data-meta ()
+(defun cuckoo-search-get-data-meta ()
   "This reads all filenames in the data folder and puts them into a hashtable."
    (with-temp-buffer
-     (insert (shell-command-to-string (concat cuckoo-fd-metadata-cmd " \"" (expand-file-name cuckoo-elfeed-data-folder)  "\" ")))
+     (insert (shell-command-to-string (concat cuckoo-search-fd-metadata-cmd " \"" (expand-file-name cuckoo-search-elfeed-data-folder)  "\" ")))
      (let ((temp-filenames (split-string (buffer-string) "\n" t)))
        (dolist (filename temp-filenames)
-	 (puthash (file-name-nondirectory filename) filename cuckoo-content-full_filename)))))
+	 (puthash (file-name-nondirectory filename) filename cuckoo-search-content-full_filename)))))
 
 (defun cuckoo-search (&optional search-string)
  "Content-based search for Elfeed."
  (interactive)
- (cuckoo-get-index-meta)
- (cuckoo-get-data-meta)
+ (cuckoo-search-get-index-meta)
+ (cuckoo-search-get-data-meta)
  (let* ((search (if (not search-string)
 			 (read-from-minibuffer "Search for: ")
 		       search-string))
-	(cuckoo-search-content-id (make-hash-table :test 'equal)))
+	(cuckoo-search-findings-content-id (make-hash-table :test 'equal)))
    (with-temp-buffer
-     (insert (shell-command-to-string (concat "rg -l -i -e \"" search "\" \"" (expand-file-name cuckoo-elfeed-data-folder) "\" --sort accessed")))
+     (insert (shell-command-to-string (concat "rg -l -i -e \"" search "\" \"" (expand-file-name cuckoo-search-elfeed-data-folder) "\" --sort accessed")))
       (let ((lines (split-string (buffer-string) "\n" t)))
 	(dolist (content lines)
-	  (puthash (file-name-nondirectory content) (gethash (file-name-nondirectory content) cuckoo-content-id) cuckoo-search-content-id))))
+	  (puthash (file-name-nondirectory content) (gethash (file-name-nondirectory content) cuckoo-search-content-id) cuckoo-search-findings-content-id))))
    (with-current-buffer "*elfeed-search*"
-     (let* ((allowed-entries (hash-table-values cuckoo-search-content-id)) 
+     (let* ((allowed-entries (hash-table-values cuckoo-search-findings-content-id)) 
 	    (filtered-entries '())) 
        (dolist (entry elfeed-search-entries)
 	 (when (member entry allowed-entries)
 	   (push entry filtered-entries))) 
        (setq elfeed-search-entries (nreverse filtered-entries)) 
-       (elfeed-save-excursion
          (let ((inhibit-read-only t)
               (standard-output (current-buffer)))
            (erase-buffer)
@@ -115,11 +115,11 @@
              (insert "\n"))
 	   (setq header-line-format
 		 (list (elfeed-search--header) " \"" search "\""))
-           (setf elfeed-search-last-update (float-time))))))))
+           (setf elfeed-search-last-update (float-time)))))))
 
-(advice-add 'elfeed-search-clear-filter :after #'cuckoo-elfeed-restore-header)
+(advice-add 'elfeed-search-clear-filter :after #'cuckoo-search-elfeed-restore-header)
 
-(defun cuckoo-elfeed-restore-header ()
+(defun cuckoo-search-elfeed-restore-header ()
  "Restores the old `header-line-format'."
 (with-current-buffer "*elfeed-search*"
   (setq header-line-format (elfeed-search--header))))     
