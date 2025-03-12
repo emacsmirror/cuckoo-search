@@ -114,7 +114,7 @@
 (defun cuckoo-search-add-search ()
   "Adds a new search combo to the list of searches."
   (interactive)
-  (let* ((cuckoo-search-list-searces (cuckoo-search-get-list-of-searches))
+  (let* ((cuckoo-search-list-searches (cuckoo-search-get-list-of-searches))
 	 (elfeed-search-string (read-from-minibuffer "Enter the Elfeed-search-string to use (e.g. @6-months-ago +unread): "))
 	 (cuckoo-search-string (read-from-minibuffer "Enter the cuckoo-search-string to use (e.g. -w China): "))
 	 (search-name (read-from-minibuffer "Please provide a name for the new stream: "))
