@@ -112,14 +112,14 @@
   (setq header-line-format (elfeed-search--header))))     
 
 (defun cuckoo-search-add-search ()
-  "Adds a new search combo to the list of searchs."
+  "Adds a new search combo to the list of searches."
   (interactive)
-  (let* ((cuckoo-search-list-searces (cuckoo-search-get-list-of-searchs))
+  (let* ((cuckoo-search-list-searces (cuckoo-search-get-list-of-searches))
 	 (elfeed-search-string (read-from-minibuffer "Enter the Elfeed-search-string to use (e.g. @6-months-ago +unread): "))
 	 (cuckoo-search-string (read-from-minibuffer "Enter the cuckoo-search-string to use (e.g. -w China): "))
 	 (search-name (read-from-minibuffer "Please provide a name for the new stream: "))
 	 (search-name (replace-regexp-in-string "[\"'?:;\\\/]" "_" search-name)))
-    (when (not cuckoo-search-list-searchs)
+    (when (not cuckoo-search-list-searches)
       (setq cuckoo-search-list-searches (make-hash-table :test 'equal)))
     (puthash search-name (concat elfeed-search-string "::" cuckoo-search-string) cuckoo-search-list-searces)
     (with-temp-buffer
@@ -128,7 +128,7 @@
 	(write-file cuckoo-saved-searches-config-file)))))
 
 (defun cuckoo-search-get-list-of-searches ()
- "Return cuckoo-search-name-search, a hashtable that includes a list of names and locations of all searchs."
+ "Return cuckoo-search-name-search, a hashtable that includes a list of names and locations of all searches."
  (let ((cuckoo-search-file-exists (cuckoo-search-check-for-search-file)))
    (when cuckoo-search-file-exists
      (let ((cuckoo-search-list-searches (make-hash-table :test 'equal)))
@@ -167,11 +167,11 @@ cuckoo-search-list-searches))))
 	(elfeed-search-update--force))
 	(cuckoo-search-elfeed-restore-header))
       (when (not (string= cuckoo-string ""))
-	(cuckoo-search cuckoo-string)))))
+	(cuckoo-search cuckoo-string))))
 
 (defun cuckoo-search-get-elfeed-string (string)
   "Return the elfeed-search-string."
- (let* ((cuckoo-search-list-searches (cuckoo-search-get-list-of-searchs))
+ (let* ((cuckoo-search-list-searches (cuckoo-search-get-list-of-searches))
        (elfeed-string (gethash string cuckoo-search-list-searches)))
    (string-match "\\(.*?\\)::\\(.*\\)" elfeed-string)
    (setq elfeed-string (match-string 1 elfeed-string))
@@ -179,7 +179,7 @@ cuckoo-search-list-searches))))
 
 (defun cuckoo-search-get-cuckoo-string (string)
    "Return the cuckoo-search-string."
-  (let* ((cuckoo-search-list-searches (cuckoo-search-get-list-of-searchs)) 
+  (let* ((cuckoo-search-list-searches (cuckoo-search-get-list-of-searches)) 
 	 (cuckoo-string (gethash string cuckoo-search-list-searches)))
    (string-match "\\(.*?\\)::\\(.*\\)" cuckoo-string)
    (setq cuckoo-string (match-string 2 cuckoo-string))
