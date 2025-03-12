@@ -32,7 +32,7 @@ This is my current setup:
 
 *** cuckoo-search
 
-When visiting the *elfeed-search* buffer invoke "C" (see above) or M-x cuckoo-search and enter a search term.
+When visiting the *elfeed-search* buffer invoke "C" (see above) or M-x cuckoo-search and enter a search term. As ripgrep is using /regexp/ and examines HTML files, you may want to add "\w" after words, for example "price\w" for "price".
 
 ** FAQ
 
