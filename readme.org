@@ -34,6 +34,8 @@ This is my current setup:
 
 When visiting the *elfeed-search* buffer invoke "C" (see above) or M-x cuckoo-search and enter a search term. As ripgrep is using /regexp/ and examines HTML files, you may want to add "\w" after words, for example "price\w" for "price".
 
+Alternative you could also use "-w Taiwan|China|Ukraine" to search for either Taiwan, China or Ukraine as words.
+
 ** FAQ
 
 A cuckoo draws on other birds to hatch his eggs. In a similar manner, this package uses some Elfeed-code and rg to create the search, hence the name.  
