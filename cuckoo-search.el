@@ -153,7 +153,7 @@ cuckoo-search-list-searches))))
 	   (setq cuckoo-search-file-exists t))))
   cuckoo-search-file-exists))
 
-(defun cuckoo-saved-searches ()
+(defun cuckoo-search-saved-searches ()
   "Start a search from the list."
   (interactive)
   (let* ((cuckoo-search-list-searches (cuckoo-search-get-list-of-searches))
