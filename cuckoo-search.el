@@ -121,7 +121,7 @@
 	 (search-name (replace-regexp-in-string "[\"'?:;\\\/]" "_" search-name)))
     (when (not cuckoo-search-list-searches)
       (setq cuckoo-search-list-searches (make-hash-table :test 'equal)))
-    (puthash search-name (concat elfeed-search-string "::" cuckoo-search-string) cuckoo-search-list-searces)
+    (puthash search-name (concat elfeed-search-string "::" cuckoo-search-string) cuckoo-search-list-searches)
     (with-temp-buffer
       (let* ((json-data (json-encode cuckoo-search-list-searches)))
 	(insert json-data)
