@@ -2,7 +2,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: https://github.com/rtrppl/cuckoo-search
-;; Version: 0.1
+;; Version: 0.2
 ;; Package-Requires: ((emacs "27.2"))
 ;; Keywords: comm wp outlines
 
@@ -30,11 +30,17 @@
 ;;
 ;;; News
 ;;
+;; 0.2
+;; - Added `cuckoo-saved-searches'
+;;
+;; 0.1
+;; - Initial release
 
 (defvar cuckoo-search-content-id (make-hash-table :test 'equal) "Hashtable with the key content hash and the value id.")
 (defvar cuckoo-search-elfeed-data-folder "~/.elfeed/data/")
 (defvar cuckoo-search-elfeed-index-file "~/.elfeed/index")
 (defvar cuckoo-search-rg-cmd "rg -l -i -e")
+(defvar cuckoo-saved-searches-config-file "~/.cuckoo-search-saved-searches")
 
 (defun cuckoo-search-read-index-file ()
   "Reads the Elfeed index file and returns only the real index (:version 4)."
@@ -105,3 +111,98 @@
 (with-current-buffer "*elfeed-search*"
   (setq header-line-format (elfeed-search--header))))     
 
+(defun cuckoo-search-add-search ()
+  "Adds a new search combo to the list of searchs."
+  (interactive)
+  (let* ((cuckoo-search-list-searces (cuckoo-search-get-list-of-searchs))
+	 (elfeed-search-string (read-from-minibuffer "Enter the Elfeed-search-string to use (e.g. @6-months-ago +unread): "))
+	 (cuckoo-search-string (read-from-minibuffer "Enter the cuckoo-search-string to use (e.g. -w China): "))
+	 (search-name (read-from-minibuffer "Please provide a name for the new stream: "))
+	 (search-name (replace-regexp-in-string "[\"'?:;\\\/]" "_" search-name)))
+    (when (not cuckoo-search-list-searchs)
+      (setq cuckoo-search-list-searches (make-hash-table :test 'equal)))
+    (puthash search-name (concat elfeed-search-string "::" cuckoo-search-string) cuckoo-search-list-searces)
+    (with-temp-buffer
+      (let* ((json-data (json-encode cuckoo-search-list-searches)))
+	(insert json-data)
+	(write-file cuckoo-saved-searches-config-file)))))
+
+(defun cuckoo-search-get-list-of-searches ()
+ "Return cuckoo-search-name-search, a hashtable that includes a list of names and locations of all searchs."
+ (let ((cuckoo-search-file-exists (cuckoo-search-check-for-search-file)))
+   (when cuckoo-search-file-exists
+     (let ((cuckoo-search-list-searches (make-hash-table :test 'equal)))
+       (with-temp-buffer
+	 (insert-file-contents cuckoo-saved-searches-config-file)
+	 (if (fboundp 'json-parse-buffer)
+	     (setq cuckoo-search-list-searches (json-parse-buffer))))
+cuckoo-search-list-searches))))
+
+(defun cuckoo-search-check-for-search-file ()
+  "Checks for a search file in `cuckoo-saved-searches-config-file'."
+  (let ((cuckoo-search-file-exists nil)
+	(cuckoo-search-list-searches (make-hash-table :test 'equal))
+	(length-of-list))
+  (when (file-exists-p cuckoo-saved-searches-config-file)
+    (with-temp-buffer
+	 (insert-file-contents cuckoo-saved-searches-config-file)
+	 (if (fboundp 'json-parse-buffer)
+	     (setq cuckoo-search-list-searches (json-parse-buffer)))
+	 (setq length-of-list (length (hash-table-values cuckoo-search-list-searches)))
+	 (when (not (zerop length-of-list))
+	   (setq cuckoo-search-file-exists t))))
+  cuckoo-search-file-exists))
+
+(defun cuckoo-saved-searches ()
+  "Start a search from the list."
+  (interactive)
+  (let* ((cuckoo-search-list-searches (cuckoo-search-get-list-of-searches))
+	 (searches (hash-table-keys cuckoo-search-list-searches))
+	 (selection (completing-read "Select search: " searches))
+	 (elfeed-string (cuckoo-search-get-elfeed-string selection))
+	 (cuckoo-string (cuckoo-search-get-cuckoo-string selection)))
+    (with-current-buffer "*elfeed-search*"
+      (when (not (string= elfeed-string ""))
+	(setq elfeed-search-filter elfeed-string)
+	(elfeed-search-update--force))
+	(cuckoo-search-elfeed-restore-header))
+      (when (not (string= cuckoo-string ""))
+	(cuckoo-search cuckoo-string)))))
+
+(defun cuckoo-search-get-elfeed-string (string)
+  "Return the elfeed-search-string."
+ (let* ((cuckoo-search-list-searches (cuckoo-search-get-list-of-searchs))
+       (elfeed-string (gethash string cuckoo-search-list-searches)))
+   (string-match "\\(.*?\\)::\\(.*\\)" elfeed-string)
+   (setq elfeed-string (match-string 1 elfeed-string))
+   elfeed-string))
+
+(defun cuckoo-search-get-cuckoo-string (string)
+   "Return the cuckoo-search-string."
+  (let* ((cuckoo-search-list-searches (cuckoo-search-get-list-of-searchs)) 
+	 (cuckoo-string (gethash string cuckoo-search-list-searches)))
+   (string-match "\\(.*?\\)::\\(.*\\)" cuckoo-string)
+   (setq cuckoo-string (match-string 2 cuckoo-string))
+   cuckoo-string))
+	 
+(defun cuckoo-search-remove-search ()
+  "Remove a search from the list."
+  (interactive)
+  (let* ((cuckoo-search-list-searches (cuckoo-search-get-list-of-searches))
+	 (searches (hash-table-keys cuckoo-search-list-searches))
+	 (json-data)
+	 (selection))
+    (sort searches 'string<)
+    (setq selection
+	  (completing-read "Which search should be removed? " searches))
+    (if (not (member selection searches))
+	(message "This search does not exist.")
+      (if (yes-or-no-p (format "Are you sure you want to remove \"%s\" as a saved search? " selection))
+	  (progn
+	    (remhash selection cuckoo-search-list-searches)
+	    (with-temp-buffer
+	      (setq json-data (json-encode cuckoo-search-list-searches))
+	      (insert json-data)
+	      (write-file cuckoo-saved-searches-config-file)))))))
+
+(provide 'cuckoo-search)
