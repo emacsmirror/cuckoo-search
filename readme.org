@@ -6,7 +6,7 @@
 
 [[https://github.com/skeeto/elfeed][Elfeed]] is a great and mature RSS reader for Emacs. Everyone using Emacs should give it a spin. However, for my particular (and probably niche) use-case it has one important short-coming: it does not allow to search the content of RSS feeds - only tags, titles, dates etc. 
 
-This package uses [[https://github.com/BurntSushi/ripgrep][ripgrep]]-magic to address this. It searches the content of all entries currently displayed for specific terms (regexp welcome). 
+*cuckoo-search* package uses [[https://github.com/BurntSushi/ripgrep][ripgrep]]-magic to address this. It searches the content of all entries currently displayed for specific terms (regexp welcome). 
 
 ** Changelog
 
@@ -33,3 +33,7 @@ This is my current setup:
 *** cuckoo-search
 
 When visiting the *elfeed-search* buffer invoke "C" (see above) or M-x cuckoo-search and enter a search term.
+
+** FAQ
+
+A cuckoo draws on other birds to hatch his eggs. This package uses some Elfeed-code and rg to create the search, hence the name.  
