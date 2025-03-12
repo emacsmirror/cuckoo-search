@@ -37,7 +37,7 @@
 (defvar cuckoo-search-rg-cmd "rg -l -i -e")
 
 (defun cuckoo-search-read-index-file ()
-  "Reads the Elfeed index file and return only the real index (:version 4)."
+  "Reads the Elfeed index file and returns only the real index (:version 4)."
   (with-temp-buffer
     (insert-file-contents cuckoo-search-elfeed-index-file) 
     (goto-char (point-min))
@@ -51,7 +51,7 @@
       real-index))) 
 
 (defun cuckoo-search-get-index-meta ()
-  "Tests the read index function. This one works!"
+  "Parses the index and fills the hashtable `cuckoo-search-content-id'."
   (let ((index (cuckoo-search-read-index-file)) 
         (entries nil))
     (when index 
