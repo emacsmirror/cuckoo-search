@@ -1,7 +1,7 @@
 ;;; cuckoo-search.el --- Content-based search hacks for elfeed -*- lexical-binding: t; -*-
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
-;; URL: https://github.com/rtrppl/cuckoo
+;; URL: https://github.com/rtrppl/cuckoo-search
 ;; Version: 0.1
 ;; Package-Requires: ((emacs "27.2"))
 ;; Keywords: comm wp outlines
@@ -23,23 +23,18 @@
 
 ;;; Commentary:
 
-;; cuckoo.el is collection of hacks to allow for content-based 
-;; search in elfeed. Very early stage. Requires fd and rg.
+;; cuckoo-search.el is collection of hacks to allow for content-based 
+;; search in elfeed. Very early stage. Requires ripgrep.
 ;;
 ;;
 ;;
 ;;; News
 ;;
 
-(require 'cl-lib)
-
 (defvar cuckoo-search-content-id (make-hash-table :test 'equal) "Hashtable with the key content hash and the value id.")
-(defvar cuckoo-search-content-title (make-hash-table :test 'equal) "Hashtable with the key content hash and the value id.")
-(defvar cuckoo-search-content-url (make-hash-table :test 'equal) "Hashtable with the key content hash and the value id.")
-(defvar cuckoo-search-content-full_filename (make-hash-table :test 'equal) "Hashtable with the key content hash and the value id.")
 (defvar cuckoo-search-elfeed-data-folder "~/.elfeed/data/")
 (defvar cuckoo-search-elfeed-index-file "~/.elfeed/index")
-(defvar cuckoo-search-fd-metadata-cmd "fd -a --type file .")
+(defvar cuckoo-search-rg-cmd "rg -l -i -e")
 
 (defun cuckoo-search-read-index-file ()
   "Reads the Elfeed index file and return only the real index (:version 4)."
@@ -63,40 +58,26 @@
       (setq entries (plist-get index :entries)) 
       (if entries  
           (maphash (lambda (key value)
-		      (let* ((entry-title (elfeed-entry-title value))  
-                             (entry-url (elfeed-entry-link value))
-			     (entry-content (elfeed-entry-content value))
+		      (let* ((entry-content (elfeed-entry-content value))
 			     (entry-string (prin1-to-string entry-content))  
 			     (entry-content-hash 
 			      (if 
 				  (string-match "\"\\([a-f0-9]+\\)\"" entry-string)
 				  (match-string 1 entry-string)
-				nil)) 
-			     (entry-tags (elfeed-entry-tags value)))
-			(puthash entry-content-hash value cuckoo-search-content-id)
-			(puthash entry-content-hash entry-title cuckoo-search-content-title)
-			(puthash entry-content-hash entry-url cuckoo-search-content-url))) 
+				nil)))
+			(puthash entry-content-hash value cuckoo-search-content-id)))
 		       entries)))))
-
-(defun cuckoo-search-get-data-meta ()
-  "This reads all filenames in the data folder and puts them into a hashtable."
-   (with-temp-buffer
-     (insert (shell-command-to-string (concat cuckoo-search-fd-metadata-cmd " \"" (expand-file-name cuckoo-search-elfeed-data-folder)  "\" ")))
-     (let ((temp-filenames (split-string (buffer-string) "\n" t)))
-       (dolist (filename temp-filenames)
-	 (puthash (file-name-nondirectory filename) filename cuckoo-search-content-full_filename)))))
 
 (defun cuckoo-search (&optional search-string)
  "Content-based search for Elfeed."
  (interactive)
  (cuckoo-search-get-index-meta)
- (cuckoo-search-get-data-meta)
  (let* ((search (if (not search-string)
 			 (read-from-minibuffer "Search for: ")
 		       search-string))
 	(cuckoo-search-findings-content-id (make-hash-table :test 'equal)))
    (with-temp-buffer
-     (insert (shell-command-to-string (concat "rg -l -i -e \"" search "\" \"" (expand-file-name cuckoo-search-elfeed-data-folder) "\" --sort accessed")))
+     (insert (shell-command-to-string (concat cuckoo-search-rg-cmd " \"" search "\" \"" (expand-file-name cuckoo-search-elfeed-data-folder) "\" --sort accessed")))
       (let ((lines (split-string (buffer-string) "\n" t)))
 	(dolist (content lines)
 	  (puthash (file-name-nondirectory content) (gethash (file-name-nondirectory content) cuckoo-search-content-id) cuckoo-search-findings-content-id))))
