@@ -38,4 +38,4 @@ Alternative you could also use "-w Taiwan|China|Ukraine" to search for either Ta
 
 ** FAQ
 
-A cuckoo draws on other birds to hatch his eggs. In a similar manner, this package uses some Elfeed-code and rg to create the search, hence the name.  
+A cuckoo relies on other birds to hatch its eggs. In a similar manner, this package uses some Elfeed-code and rg to create the search, hence the name.  
