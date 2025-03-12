@@ -28,7 +28,8 @@ This is my current setup:
   :after (elfeed)
   :bind
   (:map elfeed-search-mode-map
-	      ("C" . cuckoo-search)))
+	      ("C" . cuckoo-search)
+	      ("x" . cuckoo-search-saved-searches)))
 #+end_src
 
 ** Usage
