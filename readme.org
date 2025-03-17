@@ -1,6 +1,6 @@
 #+title: cuckoo-search.el
 
-*cuckoo-search.el* adds content-based search to Elfeed.
+*cuckoo-search.el* adds content-based search features to Elfeed.
 
 ** The Idea
 
@@ -40,10 +40,18 @@ When visiting the *elfeed-search* buffer invoke "C" (see above) or M-x cuckoo-se
 
 Alternative you could also use "-w Taiwan|China|Ukraine" to search for either Taiwan, China or Ukraine as words.
 
+
 *** cuckoo-search-saved-searches
 
 The functions =cuckoo-search-add-search=, =cuckoo-search-remove-search= and =cuckoo-search-saved-searches= allow for the management of search routines for later/repeated use. Both, Elfeed and cuckoo-search strings can be stored (leave the cuckoo-search-string empty if not needed).
 
+This is an example of a saved search for the combination of the Elfeed tags "+unread +newspaper" and the cuckoo-search "China|chinese|Taiwan|Ukraine":
+
+#+BEGIN_HTML
+<img src="/cuckoo-search-example.png" alt="An example of a cuckoo-search-saved search.">
+#+END_HTML
+
+
 ** FAQ
 
-A cuckoo relies on other birds to hatch its eggs. In a similar manner, this package uses some Elfeed-code and rg to create the search, hence the name.  
+A cuckoo relies on other birds to hatch its eggs. In a similar manner, this package uses some Elfeed-code and rg to create the search, hence the name. Also I just finished reading "The Cuckoo's Egg" by Cliff Stoll. A good book and it has an Emacs story in it. 
