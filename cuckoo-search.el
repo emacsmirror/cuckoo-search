@@ -36,6 +36,8 @@
 ;; 0.1
 ;; - Initial release
 
+(require 'json)   ; For json-encode
+
 (defvar cuckoo-search-content-id (make-hash-table :test 'equal) "Hashtable with the key content hash and the value id.")
 (defvar cuckoo-search-elfeed-data-folder "~/.elfeed/data/")
 (defvar cuckoo-search-elfeed-index-file "~/.elfeed/index")
