@@ -2,8 +2,8 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: https://github.com/rtrppl/cuckoo-search
-;; Version: 0.2
-;; Package-Requires: ((emacs "27.2"))
+;; Version: 0.2.1
+;; Package-Requires: ((emacs "29.1"))
 ;; Keywords: comm wp outlines
 
 ;; This file is not part of GNU Emacs.
@@ -23,12 +23,17 @@
 
 ;;; Commentary:
 
-;; cuckoo-search.el is collection of hacks to allow for content-based 
+;; cuckoo-search.el is collection of hacks to allow for content-based
 ;; search in elfeed. Very early stage. Requires ripgrep.
 ;;
 ;;
 ;;
 ;;; News
+;;
+;; 0.2.1
+;; - Now uses `elfeed-db-directory' to get value for data-folder and
+;; index file; flycheck package hygiene (thanks @sarg for both
+;; suggestions); removed package-lint issues
 ;;
 ;; 0.2
 ;; - Added `cuckoo-saved-searches'
@@ -36,40 +41,44 @@
 ;; 0.1
 ;; - Initial release
 
+;;; Code:
+
+(require 'elfeed)
+(require 'elfeed-db)
 (require 'json)   ; For json-encode
 
 (defvar cuckoo-search-content-id (make-hash-table :test 'equal) "Hashtable with the key content hash and the value id.")
-(defvar cuckoo-search-elfeed-data-folder "~/.elfeed/data/")
-(defvar cuckoo-search-elfeed-index-file "~/.elfeed/index")
+(defvar cuckoo-search-elfeed-data-folder (expand-file-name "data" elfeed-db-directory))
+(defvar cuckoo-search-elfeed-index-file (expand-file-name "index" elfeed-db-directory))
 (defvar cuckoo-search-rg-cmd "rg -l -i -e")
-(defvar cuckoo-saved-searches-config-file "~/.cuckoo-search-saved-searches")
+(defvar cuckoo-search-saved-searches-config-file "~/.cuckoo-search-saved-searches")
 
 (defun cuckoo-search-read-index-file ()
-  "Reads the Elfeed index file and returns only the real index (:version 4)."
+  "Read the Elfeed index file and return only the real index (:version 4)."
   (with-temp-buffer
-    (insert-file-contents cuckoo-search-elfeed-index-file) 
+    (insert-file-contents cuckoo-search-elfeed-index-file)
     (goto-char (point-min))
-    (let (real-index)  
-      (while (not (eobp))  
-        (condition-case nil 
-            (let ((data (read (current-buffer))))  
+    (let (real-index)
+      (while (not (eobp))
+        (condition-case nil
+            (let ((data (read (current-buffer))))
               (when (and (plistp data) (= (plist-get data :version) 4))
                 (setq real-index data)))
-          (error nil)))  
-      real-index))) 
+          (error nil)))
+      real-index)))
 
 (defun cuckoo-search-get-index-meta ()
-  "Parses the index and fills the hashtable `cuckoo-search-content-id'."
-  (let ((index (cuckoo-search-read-index-file)) 
+  "Parse the index and fill the hashtable `cuckoo-search-content-id'."
+  (let ((index (cuckoo-search-read-index-file))
         (entries nil))
-    (when index 
-      (setq entries (plist-get index :entries)) 
-      (if entries  
+    (when index
+      (setq entries (plist-get index :entries))
+      (if entries
           (maphash (lambda (key value)
 		      (let* ((entry-content (elfeed-entry-content value))
-			     (entry-string (prin1-to-string entry-content))  
-			     (entry-content-hash 
-			      (if 
+			     (entry-string (prin1-to-string entry-content))
+			     (entry-content-hash
+			      (if
 				  (string-match "\"\\([a-f0-9]+\\)\"" entry-string)
 				  (match-string 1 entry-string)
 				nil)))
@@ -77,7 +86,7 @@
 		       entries)))))
 
 (defun cuckoo-search (&optional search-string)
- "Content-based search for Elfeed."
+ "Content-based search for Elfeed. Accepts optional argument SEARCH-STRING."
  (interactive)
  (cuckoo-search-get-index-meta)
  (let* ((search (if (not search-string)
@@ -90,12 +99,12 @@
 	(dolist (content lines)
 	  (puthash (file-name-nondirectory content) (gethash (file-name-nondirectory content) cuckoo-search-content-id) cuckoo-search-findings-content-id))))
    (with-current-buffer "*elfeed-search*"
-     (let* ((allowed-entries (hash-table-values cuckoo-search-findings-content-id)) 
-	    (filtered-entries '())) 
+     (let* ((allowed-entries (hash-table-values cuckoo-search-findings-content-id))
+	    (filtered-entries '()))
        (dolist (entry elfeed-search-entries)
 	 (when (member entry allowed-entries)
-	   (push entry filtered-entries))) 
-       (setq elfeed-search-entries (nreverse filtered-entries)) 
+	   (push entry filtered-entries)))
+       (setq elfeed-search-entries (nreverse filtered-entries))
          (let ((inhibit-read-only t)
               (standard-output (current-buffer)))
            (erase-buffer)
@@ -109,12 +118,12 @@
 (advice-add 'elfeed-search-clear-filter :after #'cuckoo-search-elfeed-restore-header)
 
 (defun cuckoo-search-elfeed-restore-header ()
- "Restores the old `header-line-format'."
+ "Restore the old `header-line-format'."
 (with-current-buffer "*elfeed-search*"
-  (setq header-line-format (elfeed-search--header))))     
+  (setq header-line-format (elfeed-search--header))))
 
 (defun cuckoo-search-add-search ()
-  "Adds a new search combo to the list of searches."
+  "Add a new search combo to the list of saved-searches."
   (interactive)
   (let* ((cuckoo-search-list-searches (cuckoo-search-get-list-of-searches))
 	 (elfeed-search-string (read-from-minibuffer "Enter the Elfeed-search-string to use (e.g. @6-months-ago +unread): "))
@@ -127,27 +136,27 @@
     (with-temp-buffer
       (let* ((json-data (json-encode cuckoo-search-list-searches)))
 	(insert json-data)
-	(write-file cuckoo-saved-searches-config-file)))))
+	(write-file cuckoo-search-saved-searches-config-file)))))
 
 (defun cuckoo-search-get-list-of-searches ()
- "Return cuckoo-search-name-search, a hashtable that includes a list of names and locations of all searches."
+  "Return the hashtable cuckoo-search-name-search."
  (let ((cuckoo-search-file-exists (cuckoo-search-check-for-search-file)))
    (when cuckoo-search-file-exists
      (let ((cuckoo-search-list-searches (make-hash-table :test 'equal)))
        (with-temp-buffer
-	 (insert-file-contents cuckoo-saved-searches-config-file)
+	 (insert-file-contents cuckoo-search-saved-searches-config-file)
 	 (if (fboundp 'json-parse-buffer)
 	     (setq cuckoo-search-list-searches (json-parse-buffer))))
 cuckoo-search-list-searches))))
 
 (defun cuckoo-search-check-for-search-file ()
-  "Checks for a search file in `cuckoo-saved-searches-config-file'."
+  "Check for a search file in `cuckoo-search-saved-searches-config-file'."
   (let ((cuckoo-search-file-exists nil)
 	(cuckoo-search-list-searches (make-hash-table :test 'equal))
 	(length-of-list))
-  (when (file-exists-p cuckoo-saved-searches-config-file)
+  (when (file-exists-p cuckoo-search-saved-searches-config-file)
     (with-temp-buffer
-	 (insert-file-contents cuckoo-saved-searches-config-file)
+	 (insert-file-contents cuckoo-search-saved-searches-config-file)
 	 (if (fboundp 'json-parse-buffer)
 	     (setq cuckoo-search-list-searches (json-parse-buffer)))
 	 (setq length-of-list (length (hash-table-values cuckoo-search-list-searches)))
@@ -172,7 +181,7 @@ cuckoo-search-list-searches))))
 	(cuckoo-search cuckoo-string))))
 
 (defun cuckoo-search-get-elfeed-string (string)
-  "Return the elfeed-search-string."
+  "Return the elfeed-search-string from STRING."
  (let* ((cuckoo-search-list-searches (cuckoo-search-get-list-of-searches))
        (elfeed-string (gethash string cuckoo-search-list-searches)))
    (string-match "\\(.*?\\)::\\(.*\\)" elfeed-string)
@@ -180,8 +189,8 @@ cuckoo-search-list-searches))))
    elfeed-string))
 
 (defun cuckoo-search-get-cuckoo-string (string)
-   "Return the cuckoo-search-string."
-  (let* ((cuckoo-search-list-searches (cuckoo-search-get-list-of-searches)) 
+   "Return the cuckoo-search-string from STRING."
+  (let* ((cuckoo-search-list-searches (cuckoo-search-get-list-of-searches))
 	 (cuckoo-string (gethash string cuckoo-search-list-searches)))
    (string-match "\\(.*?\\)::\\(.*\\)" cuckoo-string)
    (setq cuckoo-string (match-string 2 cuckoo-string))
@@ -205,6 +214,8 @@ cuckoo-search-list-searches))))
 	    (with-temp-buffer
 	      (setq json-data (json-encode cuckoo-search-list-searches))
 	      (insert json-data)
-	      (write-file cuckoo-saved-searches-config-file)))))))
+	      (write-file cuckoo-search-saved-searches-config-file)))))))
 
 (provide 'cuckoo-search)
+
+;;; cuckoo-search.el ends here

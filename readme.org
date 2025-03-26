@@ -10,6 +10,9 @@
 
 ** Changelog
 
+*0.2.1*
+- Now uses =elfeed-db-directory= to get value for data-folder and index file; flycheck package hygiene (thanks @sarg for both suggestions); removed package-lint issues
+
 *0.2*
 - Added =cuckoo-search-saved-searches= functionality
 
