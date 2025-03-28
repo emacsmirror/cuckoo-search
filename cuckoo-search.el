@@ -1,10 +1,9 @@
-;;; cuckoo-search.el --- Content-based search hacks for elfeed -*- lexical-binding: t; -*-
+;;; cuckoo-search.el --- Content-based search and saved-searches for Elfeed -*- lexical-binding: t; -*-
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: https://github.com/rtrppl/cuckoo-search
-;; Version: 0.2.1
+;; Version: 0.2.2
 ;; Package-Requires: ((emacs "29.1"))
-;; Keywords: comm wp outlines
 
 ;; This file is not part of GNU Emacs.
 
@@ -24,11 +23,14 @@
 ;;; Commentary:
 
 ;; cuckoo-search.el is collection of hacks to allow for content-based
-;; search in elfeed. Very early stage. Requires ripgrep.
+;; search in Elfeed. Requires ripgrep and Elfeed. See README for more.
 ;;
 ;;
 ;;
 ;;; News
+;;
+;; 0.2.2
+;; - More polishing for intended Melpa release
 ;;
 ;; 0.2.1
 ;; - Now uses `elfeed-db-directory' to get value for data-folder and
