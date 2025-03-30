@@ -10,6 +10,9 @@
 
 ** Changelog
 
+*0.2.3*
+- More adjustments; added GPL v3 license
+
 *0.2.2*
 - More polishing for intended Melpa release
 
@@ -25,6 +28,8 @@
 ** Installation 
 
 *** Use-package
+
+You do need to have =ripgrep= installed on your system and load cuckoo-search *after* the Elfeed package. 
 
 This is my current setup:
 

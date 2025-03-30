@@ -23,17 +23,21 @@
 ;;; Commentary:
 
 ;; cuckoo-search.el is collection of hacks to allow for content-based
-;; search in Elfeed. Requires ripgrep and Elfeed. See README for more.
+;; search in Elfeed. Requires ripgrep and the Elfeed package, the 
+;; latter must be loaded first - see the above URL for more info. 
 ;;
 ;;
 ;;
 ;;; News
 ;;
+;; 0.2.3
+;; - More adjustments; added GPL v3 license
+;;
 ;; 0.2.2
 ;; - More polishing for intended Melpa release
 ;;
 ;; 0.2.1
-;; - Now uses `elfeed-db-directory' to get value for data-folder and
+;; - Now uses `elfeed-db-directory` to get value for data-folder and
 ;; index file; flycheck package hygiene (thanks @sarg for both
 ;; suggestions); removed package-lint issues
 ;;
@@ -45,8 +49,6 @@
 
 ;;; Code:
 
-(require 'elfeed)
-(require 'elfeed-db)
 (require 'json)   ; For json-encode
 
 (defvar cuckoo-search-content-id (make-hash-table :test 'equal) "Hashtable with the key content hash and the value id.")
