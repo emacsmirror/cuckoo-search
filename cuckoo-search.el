@@ -50,6 +50,8 @@
 ;;; Code:
 
 (require 'json)   ; For json-encode
+(require 'elfeed) ; cuckoo-search does not work without Elfeed
+(require 'elfeed-db)
 
 (defvar cuckoo-search-content-id (make-hash-table :test 'equal) "Hashtable with the key content hash and the value id.")
 (defvar cuckoo-search-elfeed-data-folder (expand-file-name "data" elfeed-db-directory))
