@@ -2,7 +2,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: https://github.com/rtrppl/cuckoo-search
-;; Version: 0.2.2
+;; Version: 0.2.4
 ;; Package-Requires: ((emacs "29.1"))
 
 ;; This file is not part of GNU Emacs.
@@ -23,12 +23,16 @@
 ;;; Commentary:
 
 ;; cuckoo-search.el is collection of hacks to allow for content-based
-;; search in Elfeed. Requires ripgrep and the Elfeed package, the 
-;; latter must be loaded first - see the above URL for more info. 
+;; search in Elfeed. Requires ripgrep and the Elfeed package, the
+;; latter must be loaded first - see the above URL for more info.
 ;;
 ;;
 ;;
 ;;; News
+;;
+;; 0.2.4
+;; - Even more adjustments; added minor-mode `cuckoo-search-mode' and
+;; global mode `cuckoo-search-global-mode'
 ;;
 ;; 0.2.3
 ;; - More adjustments; added GPL v3 license
@@ -59,6 +63,17 @@
 (defvar cuckoo-search-rg-cmd "rg -l -i -e")
 (defvar cuckoo-search-saved-searches-config-file "~/.cuckoo-search-saved-searches")
 
+(define-minor-mode cuckoo-search-mode 
+  "Minor mode to better integrate `cuckoo-search' into `elfeed-search-mode'."
+  :lighter " cuckoo-search-mode"
+  (advice-add 'elfeed-search-clear-filter :after #'cuckoo-search-elfeed-restore-header))
+
+(define-globalized-minor-mode cuckoo-search-global-mode
+  cuckoo-search-mode
+  (lambda ()
+    (when (derived-mode-p 'elfeed-search-mode)
+      (cuckoo-search-mode 1))))
+
 (defun cuckoo-search-read-index-file ()
   "Read the Elfeed index file and return only the real index (:version 4)."
   (with-temp-buffer
@@ -80,7 +95,7 @@
     (when index
       (setq entries (plist-get index :entries))
       (if entries
-          (maphash (lambda (key value)
+          (maphash (lambda (_key value)
 		      (let* ((entry-content (elfeed-entry-content value))
 			     (entry-string (prin1-to-string entry-content))
 			     (entry-content-hash
@@ -120,8 +135,6 @@
 	   (setq header-line-format
 		 (list (elfeed-search--header) " \"" search "\""))
            (setf elfeed-search-last-update (float-time)))))))
-
-(advice-add 'elfeed-search-clear-filter :after #'cuckoo-search-elfeed-restore-header)
 
 (defun cuckoo-search-elfeed-restore-header ()
  "Restore the old `header-line-format'."
@@ -221,6 +234,8 @@ cuckoo-search-list-searches))))
 	      (setq json-data (json-encode cuckoo-search-list-searches))
 	      (insert json-data)
 	      (write-file cuckoo-search-saved-searches-config-file)))))))
+
+(cuckoo-search-global-mode)
 
 (provide 'cuckoo-search)
 

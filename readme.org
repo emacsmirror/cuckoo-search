@@ -10,6 +10,9 @@
 
 ** Changelog
 
+*0.2.4*
+- Even more adjustments; added minor-mode =cuckoo-search-mode= and global mode =cuckoo-search-global-mode=
+
 *0.2.3*
 - More adjustments; added GPL v3 license
 
