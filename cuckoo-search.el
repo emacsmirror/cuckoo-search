@@ -3,7 +3,7 @@
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: https://github.com/rtrppl/cuckoo-search
 ;; Version: 0.2.4
-;; Package-Requires: ((emacs "29.1"))
+;; Package-Requires: ((emacs "29.1") (elfeed "3.4.2"))
 
 ;; This file is not part of GNU Emacs.
 
@@ -63,16 +63,25 @@
 (defvar cuckoo-search-rg-cmd "rg -l -i -e")
 (defvar cuckoo-search-saved-searches-config-file "~/.cuckoo-search-saved-searches")
 
-(define-minor-mode cuckoo-search-mode 
+(defgroup cuckoo-search ()
+  "Content-based search and saved-searches for Elfeed."
+  :group 'comm)
+
+(define-minor-mode cuckoo-search-mode
   "Minor mode to better integrate `cuckoo-search' into `elfeed-search-mode'."
   :lighter " cuckoo-search-mode"
-  (advice-add 'elfeed-search-clear-filter :after #'cuckoo-search-elfeed-restore-header))
+  (if cuckoo-search-mode
+      (advice-add 'elfeed-search-clear-filter :after #'cuckoo-search-elfeed-restore-header)
+    (advice-remove 'elfeed-search-clear-filter #'cuckoo-search-elfeed-restore-header)))
 
+;;;###autoload 
 (define-globalized-minor-mode cuckoo-search-global-mode
   cuckoo-search-mode
   (lambda ()
     (when (derived-mode-p 'elfeed-search-mode)
-      (cuckoo-search-mode 1))))
+      (cuckoo-search-mode 1)))
+  :group 'cuckoo-search
+  :init-value t)
 
 (defun cuckoo-search-read-index-file ()
   "Read the Elfeed index file and return only the real index (:version 4)."
@@ -236,7 +245,5 @@ cuckoo-search-list-searches))))
 	      (write-file cuckoo-search-saved-searches-config-file)))))))
 
 (cuckoo-search-global-mode)
-
-(provide 'cuckoo-search)
 
 ;;; cuckoo-search.el ends here
