@@ -2,7 +2,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: https://github.com/rtrppl/cuckoo-search
-;; Version: 0.2.4
+;; Version: 0.2.5
 ;; Package-Requires: ((emacs "29.1") (elfeed "3.4.2"))
 
 ;; This file is not part of GNU Emacs.
@@ -29,6 +29,10 @@
 ;;
 ;;
 ;;; News
+;;
+;; 0.2.5
+;; - Breaking changes: the user should now activate `cuckoo-search-global-mode'
+;; prior to running cuckoo-search
 ;;
 ;; 0.2.4
 ;; - Even more adjustments; added minor-mode `cuckoo-search-mode' and
@@ -74,14 +78,16 @@
       (advice-add 'elfeed-search-clear-filter :after #'cuckoo-search-elfeed-restore-header)
     (advice-remove 'elfeed-search-clear-filter #'cuckoo-search-elfeed-restore-header)))
 
-;;;###autoload 
+;;;###autoload
 (define-globalized-minor-mode cuckoo-search-global-mode
   cuckoo-search-mode
-  (lambda ()
-    (when (derived-mode-p 'elfeed-search-mode)
-      (cuckoo-search-mode 1)))
-  :group 'cuckoo-search
-  :init-value t)
+  cuckoo-search-activate-cuckoo-search-mode
+  :group 'cuckoo-search)
+
+(defun cuckoo-search-activate-cuckoo-search-mode ()
+  "Enable `cuckoo-search-mode' when in `elfeed-search-mode'."
+   (when (derived-mode-p 'elfeed-search-mode)
+     (cuckoo-search-mode 1)))
 
 (defun cuckoo-search-read-index-file ()
   "Read the Elfeed index file and return only the real index (:version 4)."
@@ -244,6 +250,6 @@ cuckoo-search-list-searches))))
 	      (insert json-data)
 	      (write-file cuckoo-search-saved-searches-config-file)))))))
 
-(cuckoo-search-global-mode)
+(provide 'cuckoo-search)
 
 ;;; cuckoo-search.el ends here
