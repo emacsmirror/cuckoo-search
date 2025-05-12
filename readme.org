@@ -11,7 +11,7 @@
 ** Changelog
 
 *0.2.5*
-- BREAKING CHANGES: As per Melpa standards, packages should neither automatically activate =add-advice= or a globalized minor mode. Starting in 0.2.5 you therefore need to add =(cuckoo-search-global-mode t)= to your configuration!
+- BREAKING CHANGES: As per Melpa standards, packages should neither automatically activate =add-advice= nor a globalized minor mode. Starting in 0.2.5 you therefore need to add =(cuckoo-search-global-mode t)= to your configuration!
 
 *0.2.4*
 - Even more adjustments; added minor-mode =cuckoo-search-mode= and global mode =cuckoo-search-global-mode=
@@ -41,7 +41,6 @@ This is my current setup:
 
 #+begin_src elisp
 (use-package cuckoo-search
-  :straight (:host github :repo "rtrppl/cuckoo-search")
   :after (elfeed) ;; necessary for use-package
   :config
   (cuckoo-search-global-mode t)  ;; necessary for smooth integration of cuckoo-search into Elfeed
