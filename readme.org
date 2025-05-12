@@ -1,4 +1,4 @@
-#+title: cuckoo-search.el
+#+title: cuckoo-search.el [[https://melpa.org/#/cuckoo-search][file:https://melpa.org/packages/cuckoo-search-badge.svg]]
 
 *cuckoo-search.el* adds content-based search features to Elfeed.
 
