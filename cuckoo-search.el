@@ -2,7 +2,7 @@
 
 ;; Maintainer: René Trappel <rtrappel@gmail.com>
 ;; URL: https://github.com/rtrppl/cuckoo-search
-;; Version: 0.2.5
+;; Version: 0.2.6
 ;; Package-Requires: ((emacs "29.1") (elfeed "3.4.2"))
 
 ;; This file is not part of GNU Emacs.
@@ -29,6 +29,9 @@
 ;;
 ;;
 ;;; News
+;;
+;; 0.2.6
+;; - Added grep as an option for the search. It works but is much slower.
 ;;
 ;; 0.2.5
 ;; - Breaking changes: the user should now activate `cuckoo-search-global-mode'
@@ -64,7 +67,9 @@
 (defvar cuckoo-search-content-id (make-hash-table :test 'equal) "Hashtable with the key content hash and the value id.")
 (defvar cuckoo-search-elfeed-data-folder (expand-file-name "data" elfeed-db-directory))
 (defvar cuckoo-search-elfeed-index-file (expand-file-name "index" elfeed-db-directory))
-(defvar cuckoo-search-rg-cmd "rg -l -i -e")
+(defvar cuckoo-search-cmd "rg") ; grep is also possible
+(defvar cuckoo-search-rg-arg "-l -i -e")
+(defvar cuckoo-search-grep-arg "-r -l -i -e")
 (defvar cuckoo-search-saved-searches-config-file "~/.cuckoo-search-saved-searches")
 
 (defgroup cuckoo-search ()
@@ -130,7 +135,10 @@
 		       search-string))
 	(cuckoo-search-findings-content-id (make-hash-table :test 'equal)))
    (with-temp-buffer
-     (insert (shell-command-to-string (concat cuckoo-search-rg-cmd " \"" search "\" \"" (expand-file-name cuckoo-search-elfeed-data-folder) "\" --sort accessed")))
+     (when (string-equal cuckoo-search-cmd "rg")
+       (insert (shell-command-to-string (concat cuckoo-search-cmd " " cuckoo-search-rg-arg " \"" search "\" \"" (expand-file-name cuckoo-search-elfeed-data-folder) "\" --sort accessed"))))
+      (when (string-equal cuckoo-search-cmd "grep")
+	(insert (shell-command-to-string (concat cuckoo-search-cmd " " cuckoo-search-grep-arg " \"" search "\" \"" (expand-file-name cuckoo-search-elfeed-data-folder) "\""))))
       (let ((lines (split-string (buffer-string) "\n" t)))
 	(dolist (content lines)
 	  (puthash (file-name-nondirectory content) (gethash (file-name-nondirectory content) cuckoo-search-content-id) cuckoo-search-findings-content-id))))

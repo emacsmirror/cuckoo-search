@@ -6,9 +6,12 @@
 
 [[https://github.com/skeeto/elfeed][Elfeed]] is a great and mature RSS reader for Emacs. Everyone using Emacs should give it a spin. However, for my particular (and probably niche) use-case it has one important short-coming: it does not allow to search the content of RSS feeds - only tags, titles, dates etc. 
 
-*cuckoo-search* uses [[https://github.com/BurntSushi/ripgrep][ripgrep]]-magic to address this. It searches the content of all entries currently displayed for specific terms (regexp welcome). 
+*cuckoo-search* uses [[https://github.com/BurntSushi/ripgrep][ripgrep]]-magic to address this (grep is now an option, though). It searches the content of all entries currently displayed for specific terms (regexp welcome). 
 
 ** Changelog
+
+*0.2.6*
+- Added =grep= as an option for the search. It works – but is much slower. For this you have to =(setq cuckoo-search-cmd "grep")=.
 
 *0.2.5*
 - BREAKING CHANGES: As per Melpa standards, packages should neither automatically activate =add-advice= nor a globalized minor mode. Starting in 0.2.5 you therefore need to add =(cuckoo-search-global-mode t)= to your configuration!
